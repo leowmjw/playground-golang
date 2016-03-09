@@ -12,5 +12,7 @@ func MyGoTest() {
 	NextIpAddr("192.168.100.1/24")
 	// Scenario #3: Assert OK Address
 	NextIpAddr("192.168.100.253/24")
+	// Scenario #4
+	NextIpAddr("100.107.92.0/10")
 
 }
