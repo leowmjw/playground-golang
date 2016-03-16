@@ -15,7 +15,7 @@ import (
 type MBPJAduan struct {
 	Id int
 	Full_Id []string
-	Category []string
+	Category []string 
 	Description []string
 	Status []string
 	Jabatan []string
