@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"github.com/yhat/scrape"
 	"golang.org/x/net/html"
-// "github.com/kr/pretty"
 	"github.com/kr/pretty"
 )
 
 // TODO: Implemnt concurrently; and we can match the lowest ..
 
 type MBPJAduan struct {
-	Id int
-	Full_Id []string
-	Category []string 
+	Id          int
+	Full_Id     []string
+	Category    []string
 	Description []string
-	Status []string
-	Jabatan []string
-	Bahagian []string
+	Status      []string
+	Jabatan     []string
+	Bahagian    []string
 }
 
 func main() {
