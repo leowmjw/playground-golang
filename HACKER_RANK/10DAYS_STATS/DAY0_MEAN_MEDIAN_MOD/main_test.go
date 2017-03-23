@@ -13,7 +13,7 @@ func TestCalculateMean(t *testing.T) {
 		Convey("Scenario: Normal, nice round value", func() {
 			test_data = []int{4, 11, 1, 2, 7}
 			result_mean := CalculateMean(test_data)
-			So(result_mean, ShouldEqual, "5")
+			So(result_mean, ShouldEqual, "5.0")
 		})
 
 		Convey("Scenario: Average, round to 1 decimal", func() {
@@ -32,7 +32,7 @@ func TestCalculateMedian(t *testing.T) {
 		Convey("Scenario: Even elements in set (average it)", func() {
 			test_data = []int{50, 44, 4, 2}
 			result_median := CalculateMedian(test_data)
-			So(result_median, ShouldEqual, "24")
+			So(result_median, ShouldEqual, "24.0")
 		})
 
 		Convey("Scenario: Even elements in set (average it, round to 1 decimal)", func() {
@@ -43,7 +43,7 @@ func TestCalculateMedian(t *testing.T) {
 		Convey("Scenario: Odd elements in set (pick middle)", func() {
 			test_data = []int{50, 1, 44, 3, 2}
 			result_median := CalculateMedian(test_data)
-			So(result_median, ShouldEqual, "3")
+			So(result_median, ShouldEqual, "3.0")
 		})
 
 	})
@@ -63,6 +63,20 @@ func TestCalculateMode(t *testing.T) {
 		Convey("Scenario: Multimodal Mod (pick smallest numerical)", func() {
 			result_mode := CalculateMode(test_data)
 			So(result_mode, ShouldEqual, "4978")
+
+		})
+
+		Convey("Scenario: Multimodal Mod (edge case of 0)", func() {
+			test_data := []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+			result_mode := CalculateMode(test_data)
+			So(result_mode, ShouldEqual, "0")
+
+		})
+
+		Convey("Scenario: Multimodal Mod (winner with lowest sort key)", func() {
+			test_data := []int{50, 9, 50, 1, 50, 9, 9, 2, 2, 2}
+			result_mode := CalculateMode(test_data)
+			So(result_mode, ShouldEqual, "2")
 
 		})
 

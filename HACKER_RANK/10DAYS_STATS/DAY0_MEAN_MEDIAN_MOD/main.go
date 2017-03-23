@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 )
 
@@ -39,10 +38,12 @@ func CalculateMean(array_to_calculate []int) string {
 
 	raw_mean := total_sum / size_of_array
 	raw_mean_string := fmt.Sprintf("%.1f", raw_mean)
+	/*
 	match, _ := regexp.MatchString("^.*\\.0$", raw_mean_string)
 	if match {
 		return fmt.Sprintf("%d", int(raw_mean))
 	}
+	*/
 
 	return raw_mean_string
 }
@@ -59,7 +60,7 @@ func CalculateMedian(array_to_calculate []int) string {
 		// minus 1 in index as we start form 0
 		mid_point := float64(size_of_array/2) + 0.5
 		// fmt.Println("CHOSEN_INDEX: ", int(mid_point))
-		return fmt.Sprintf("%d", array_to_calculate[int(mid_point)])
+		return fmt.Sprintf("%.1f", float64(array_to_calculate[int(mid_point)]))
 	}
 	// If even
 	// Take len/2 and len/2-1
@@ -71,10 +72,12 @@ func CalculateMedian(array_to_calculate []int) string {
 	// DEBUG:
 	// fmt.Println("RAW_MEDIAN: ", raw_median)
 	raw_median_string := fmt.Sprintf("%.1f", raw_median)
+	/*
 	match, _ := regexp.MatchString("^.*\\.0$", raw_median_string)
 	if match {
 		return fmt.Sprintf("%d", int(raw_median))
 	}
+	*/
 
 	return raw_median_string
 }
@@ -114,35 +117,28 @@ func sortMapByValue(m map[int]int) PairList {
 }
 
 func CalculateMode(array_to_calculate []int) string {
-	// Use map to
+	// Use map to calculate the frequency
 	frequency_counter := make(map[int]int)
-	lowest_value := 0
 	// Count as we go through
 	for _, myval := range array_to_calculate {
 		frequency_counter[myval]++
-		if lowest_value == 0 {
-			lowest_value = myval
-		} else {
-			if myval < lowest_value {
-				lowest_value = myval
-			}
-		}
 	}
 	// Used to break tie
 	// DEBUG:
 	// fmt.Println("LOWEST_VALUE: ", lowest_value)
 
 	sorted_pairlist_byval := sortMapByValue(frequency_counter)
-	// DEBUG:
-	// fmt.Println("FREQ: ", sorted_pairlist_byval)
-	if sorted_pairlist_byval[0].Value > sorted_pairlist_byval[1].Value {
-		// Pick first
-		// DEBUG:
-		// fmt.Println("WINNER: ", sorted_pairlist_byval[0].Key)
-		return fmt.Sprintf("%d", sorted_pairlist_byval[0].Key)
+	winning_key := sorted_pairlist_byval[0].Key
+	winning_qty := sorted_pairlist_byval[0].Value
+	for _, single_pairlist := range sorted_pairlist_byval {
+		if single_pairlist.Value < winning_qty {
+			// Get out of loop
+			break
+		}
+		// Take the smallest winning key
+		if single_pairlist.Key < winning_key {
+			winning_key = single_pairlist.Key
+		}
 	}
-	// DEBUG:
-	// fmt.Println("WINNER_BY_LOWEST: ", lowest_value)
-
-	return fmt.Sprintf("%d", lowest_value)
+	return fmt.Sprintf("%d", winning_key)
 }
