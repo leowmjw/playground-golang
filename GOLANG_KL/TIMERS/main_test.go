@@ -8,7 +8,34 @@ import (
 	"github.com/gavv/monotime"
 	"fmt"
 	"github.com/stephanos/clock"
+	jm "github.com/jmhodges/clock"
+	wb "github.com/WatchBeam/clock"
 )
+
+func TestWBClock(t *testing.T) {
+	currentMonoTime := monotime.Now()
+
+	c := wb.NewMockClock()
+	start := c.Now()
+	wbClock(5, c)
+	c.AddTime(-30 * time.Second)
+	fmt.Println("End Time: ", c.Now().Sub(start).Seconds())
+
+	fmt.Println("==========================")
+	fmt.Println("Elpased monotime: ", monotime.Since(currentMonoTime).Seconds())
+}
+
+func TestJMClock(t *testing.T) {
+	currentMonoTime := monotime.Now()
+	c := jm.NewFake()
+	start := c.Now()
+	jmClock(5, c)
+	c.Add(-30 * time.Second)
+	fmt.Println("End Time: ", c.Now().Sub(start).Seconds())
+
+	fmt.Println("==========================")
+	fmt.Println("Elpased monotime: ", monotime.Since(currentMonoTime).Seconds())
+}
 
 func TestSClock(t *testing.T) {
 	currentMonoTime := monotime.Now()
