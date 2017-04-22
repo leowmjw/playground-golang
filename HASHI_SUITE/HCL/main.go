@@ -7,10 +7,45 @@ import (
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"io/ioutil"
+	"github.com/erikdubbelboer/qtos"
+	"github.com/mitchellh/mapstructure"
+	"net/url"
 )
 
 func main() {
 
+}
+
+type search_query struct {
+	Query  string `query:"q" json:"-"`
+	Filter map[string]interface{} `query:"filter""`
+	Paging paging `query:"page"`
+}
+
+type paging struct {
+	Size    int `query:"size"`
+	Current int `query:"current"`
+}
+
+func ParseURLWithQtos(rawurl string) (*search_query) {
+
+	query_unmarshalled := search_query{}
+	fmt.Println("Qtos URL: ", rawurl)
+	// Parse it using Erik's function?
+	urlValues, parseerr := url.ParseQuery(rawurl)
+	if parseerr != nil {
+		fmt.Println("die!")
+	} else {
+		qtos.Unmarshal(urlValues, &query_unmarshalled)
+		// spew.Dump(query_unmarshalled)
+	}
+
+	return &query_unmarshalled
+}
+
+func ParseURLWithMapStructure(rawurl string) {
+	fmt.Println("MapStructure URL: ", rawurl)
+	_ = mapstructure.Decoder{}
 }
 
 func ParseHCL() {
