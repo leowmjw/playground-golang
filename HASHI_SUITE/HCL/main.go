@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/hcl/hcl/ast"
 	"io/ioutil"
 	"github.com/erikdubbelboer/qtos"
-	"github.com/mitchellh/mapstructure"
 	"net/url"
+	"github.com/mitchellh/mapstructure"
 )
 
 func main() {
@@ -17,14 +17,14 @@ func main() {
 }
 
 type search_query struct {
-	Query  string `query:"q" json:"-"`
-	Filter map[string]interface{} `query:"filter""`
-	Paging paging `query:"page"`
+	Query  string `query:"q" json:"-" mapstructure:"q"`
+	Filter map[string]interface{} `query:"filter"" mapstructure:"filter"`
+	Paging paging `query:"page" mapstructure:"page"`
 }
 
 type paging struct {
-	Size    int `query:"size"`
-	Current int `query:"current"`
+	Size    int `query:"size" mapstructure:"size"`
+	Current int `query:"current" mapstructure:"current"`
 }
 
 func ParseURLWithQtos(rawurl string) (*search_query) {
@@ -43,9 +43,30 @@ func ParseURLWithQtos(rawurl string) (*search_query) {
 	return &query_unmarshalled
 }
 
-func ParseURLWithMapStructure(rawurl string) {
+func ParseURLWithMapStructure(rawurl string) (*search_query) {
+	query_unmarshalled := search_query{}
 	fmt.Println("MapStructure URL: ", rawurl)
-	_ = mapstructure.Decoder{}
+	// Parse it using Erik's function?
+	urlValues, parseerr := url.ParseQuery(rawurl)
+	if parseerr != nil {
+		fmt.Println("die!", urlValues)
+	} else {
+		mymeta := mapstructure.Metadata{}
+		newConfig := mapstructure.DecoderConfig{
+			ErrorUnused:      false,
+			WeaklyTypedInput: true,
+			Metadata:         &mymeta,
+			Result:           &query_unmarshalled,
+		}
+		newDecoder, decerr := mapstructure.NewDecoder(&newConfig); if decerr != nil {
+			log.Fatal(decerr)
+		}
+		err := newDecoder.Decode(urlValues)
+		spew.Dump(query_unmarshalled)
+		fmt.Println(err.Error())
+	}
+
+	return &query_unmarshalled
 }
 
 func ParseHCL() {

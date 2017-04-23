@@ -37,6 +37,17 @@ func TestQtos(t *testing.T) {
 	})
 }
 
+func TestMapStructure(t *testing.T) {
+	t.Run("Simple scenario; just pass REQUIRED q query", func(t *testing.T) {
+		testurl := "q=Honda"
+		parsed_search := ParseURLWithMapStructure(testurl)
+
+		if parsed_search.Query != "Honda" {
+			t.Fail()
+		}
+	})
+}
+
 func TestSomething(t *testing.T) {
 	ParseHCL()
 }
