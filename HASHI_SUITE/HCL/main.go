@@ -10,6 +10,7 @@ import (
 	"github.com/erikdubbelboer/qtos"
 	"net/url"
 	"github.com/mitchellh/mapstructure"
+	"github.com/creack/httpreq"
 )
 
 func main() {
@@ -58,7 +59,8 @@ func ParseURLWithMapStructure(rawurl string) (*search_query) {
 			Metadata:         &mymeta,
 			Result:           &query_unmarshalled,
 		}
-		newDecoder, decerr := mapstructure.NewDecoder(&newConfig); if decerr != nil {
+		newDecoder, decerr := mapstructure.NewDecoder(&newConfig);
+		if decerr != nil {
 			log.Fatal(decerr)
 		}
 		err := newDecoder.Decode(urlValues)
@@ -67,6 +69,20 @@ func ParseURLWithMapStructure(rawurl string) (*search_query) {
 	}
 
 	return &query_unmarshalled
+}
+
+func ParseURLWithHttpReq(rawurl string) (*search_query) {
+	query_unmarshalled := &search_query{}
+	v, perr := url.ParseQuery(rawurl)
+	if perr != nil {
+	}
+	spew.Dump(
+		httpreq.NewParsingMap().
+			Add("q", httpreq.ToString, &query_unmarshalled.Query).
+			Add("field", httpreq.ToCommaList, &query_unmarshalled.Filter).
+			Parse(v))
+
+	return query_unmarshalled
 }
 
 func ParseHCL() {

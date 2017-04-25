@@ -48,6 +48,18 @@ func TestMapStructure(t *testing.T) {
 	})
 }
 
+func TestHttpReq(t *testing.T) {
+	t.Run("Simple scenario with only query ..", func(t *testing.T) {
+		testurl := "q=Honda&filter=Mobile&filter[categories][]=cheapo&filter[categories][]=OIL&filter[categories][boo][]=DOOD&filter[categories]=moo"
+		parsed_search := ParseURLWithHttpReq(testurl)
+		spew.Dump(parsed_search)
+		if parsed_search.Query != "Honda" {
+			t.Fail()
+		}
+
+	})
+}
+
 func TestSomething(t *testing.T) {
 	ParseHCL()
 }
