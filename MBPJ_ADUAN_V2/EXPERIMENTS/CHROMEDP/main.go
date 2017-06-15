@@ -9,44 +9,101 @@ import (
 
 	cdp "github.com/knq/chromedp"
 	cdptypes "github.com/knq/chromedp/cdp"
+	"sync"
 )
 
 func main() {
-	var err error
+	var run_count = 0
 
-	// create context
-	ctxt, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		var err error
 
-	// create chrome instance
-	c, err := cdp.New(ctxt)
-	if err != nil {
-		log.Fatal(err)
-	}
+		// create context
+		ctxt, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	// run task list
-	var site, res string
-	err = c.Run(ctxt, googleSearch("site:brank.as", "Easy Money Management", &site, &res))
-	if err != nil {
-		log.Fatal(err)
-	}
+		// create chrome instance
+		c, err := cdp.New(ctxt)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	// shutdown chrome
-	err = c.Shutdown(ctxt)
-	if err != nil {
-		log.Fatal(err)
-	}
+		// run task list
+		var site, res string
 
-	// wait for chrome to finish
-	err = c.Wait()
-	if err != nil {
-		log.Fatal(err)
-	}
+		run_count++
+		err = c.Run(ctxt, googleSearch("site:brank.as", "Easy Money Management", &site, &res, run_count))
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	log.Printf("saved screenshot of #testimonials from search result listing `%s` (%s)", res, site)
+		// shutdown chrome
+		err = c.Shutdown(ctxt)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// wait for chrome to finish
+		err = c.Wait()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("saved screenshot of #testimonials from search result listing `%s` (%s)", res, site)
+
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		fmt.Println("test")
+		var err error
+
+		// create context
+		ctxt, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// create chrome instance
+		c, err := cdp.New(ctxt)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// run task list
+		var site, res string
+
+		run_count++
+		err = c.Run(ctxt, googleSearch("site:brank.as", "Easy Money Management", &site, &res, run_count))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// shutdown chrome
+		err = c.Shutdown(ctxt)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// wait for chrome to finish
+		err = c.Wait()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("saved screenshot of #testimonials from search result listing `%s` (%s)", res, site)
+
+	}()
+
+	// Wait for lock
+	wg.Wait()
+
 }
 
-func googleSearch(q, text string, site, res *string) cdp.Tasks {
+func googleSearch(q, text string, site, res *string, run_count int) cdp.Tasks {
+	fmt.Println("COUNT: ", run_count)
 	var buf []byte
 	sel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, text)
 	return cdp.Tasks{
@@ -63,7 +120,7 @@ func googleSearch(q, text string, site, res *string) cdp.Tasks {
 		cdp.Location(site),
 		cdp.Screenshot(`#testimonials`, &buf, cdp.ByID),
 		cdp.ActionFunc(func(context.Context, cdptypes.Handler) error {
-			return ioutil.WriteFile("testimonials.png", buf, 0644)
+			return ioutil.WriteFile(fmt.Sprint("testimonials_", run_count, ".png"), buf, 0644)
 		}),
 	}
 }
