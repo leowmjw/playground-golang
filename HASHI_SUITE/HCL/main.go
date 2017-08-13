@@ -7,10 +7,82 @@ import (
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"io/ioutil"
+	"github.com/erikdubbelboer/qtos"
+	"net/url"
+	"github.com/mitchellh/mapstructure"
+	"github.com/creack/httpreq"
 )
 
 func main() {
 
+}
+
+type search_query struct {
+	Query  string `query:"q" json:"-" mapstructure:"q"`
+	Filter map[string]interface{} `query:"filter"" mapstructure:"filter"`
+	Paging paging `query:"page" mapstructure:"page"`
+}
+
+type paging struct {
+	Size    int `query:"size" mapstructure:"size"`
+	Current int `query:"current" mapstructure:"current"`
+}
+
+func ParseURLWithQtos(rawurl string) (*search_query) {
+
+	query_unmarshalled := search_query{}
+	fmt.Println("Qtos URL: ", rawurl)
+	// Parse it using Erik's function?
+	urlValues, parseerr := url.ParseQuery(rawurl)
+	if parseerr != nil {
+		fmt.Println("die!")
+	} else {
+		qtos.Unmarshal(urlValues, &query_unmarshalled)
+		// spew.Dump(query_unmarshalled)
+	}
+
+	return &query_unmarshalled
+}
+
+func ParseURLWithMapStructure(rawurl string) (*search_query) {
+	query_unmarshalled := search_query{}
+	fmt.Println("MapStructure URL: ", rawurl)
+	// Parse it using Erik's function?
+	urlValues, parseerr := url.ParseQuery(rawurl)
+	if parseerr != nil {
+		fmt.Println("die!", urlValues)
+	} else {
+		mymeta := mapstructure.Metadata{}
+		newConfig := mapstructure.DecoderConfig{
+			ErrorUnused:      false,
+			WeaklyTypedInput: true,
+			Metadata:         &mymeta,
+			Result:           &query_unmarshalled,
+		}
+		newDecoder, decerr := mapstructure.NewDecoder(&newConfig);
+		if decerr != nil {
+			log.Fatal(decerr)
+		}
+		err := newDecoder.Decode(urlValues)
+		spew.Dump(query_unmarshalled)
+		fmt.Println(err.Error())
+	}
+
+	return &query_unmarshalled
+}
+
+func ParseURLWithHttpReq(rawurl string) (*search_query) {
+	query_unmarshalled := &search_query{}
+	v, perr := url.ParseQuery(rawurl)
+	if perr != nil {
+	}
+	spew.Dump(
+		httpreq.NewParsingMap().
+			Add("q", httpreq.ToString, &query_unmarshalled.Query).
+			Add("field", httpreq.ToCommaList, &query_unmarshalled.Filter).
+			Parse(v))
+
+	return query_unmarshalled
 }
 
 func ParseHCL() {

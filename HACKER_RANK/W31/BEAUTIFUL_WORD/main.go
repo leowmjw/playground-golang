@@ -7,7 +7,10 @@ import (
 
 func main() {
 
-	fmt.Println("Beautiful Word ...")
+	word := ""
+	fmt.Scanf("%s", &word)
+	// fmt.Println("Beautiful Word ...", word)
+	fmt.Println(Beautiful_Word(word))
 }
 
 type CurrentState struct {
