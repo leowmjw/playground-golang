@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/magefile/mage/mg" // mg contains helpful utility functions, like Deps
+	"github.com/magefile/mage/sh"
 )
 
 // Default target to run when none is specified
@@ -63,4 +64,13 @@ func InstallDeps() error {
 func Clean() {
 	fmt.Println("Cleaning...")
 	os.RemoveAll("MyApp")
+}
+
+// Call Batman via his signal
+func BatSignal() {
+	output, err := sh.Output("echo", "User is ${USER}")
+	if err != nil {
+		fmt.Println("FAIL!!", err)
+	}
+	fmt.Println(output)
 }
