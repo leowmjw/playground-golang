@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/globalsign/mgo"
-	"github.com/leowmjw/playground-golang/MONGOFF/repo"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 )
 
 const (
@@ -15,33 +15,29 @@ const (
 	AuthUserName = "mleow"
 	AuthPassword = ""
 	TestDatabase = ""
+	MongoDBURL   = ""
 )
 
 func main() {
 
 	fmt.Println("MongoDB + FF! Cool!!")
 
-	// We need this object to establish a session to our MongoDB.
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{MongoDBHosts},
-		Timeout:  1 * time.Second,
-		Database: AuthDatabase,
-		Username: AuthUserName,
-		Password: AuthPassword,
-	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client, err := mongo.Connect(ctx, MongoDBURL)
 
-	// Create a session which maintains a pool of socket connections
-	// to our MongoDB.
-	mongoSession, err := mgo.DialWithInfo(mongoDBDialInfo)
 	if err != nil {
-		log.Fatalf("CreateSession: %s\n", err)
-	} else {
-		log.Println("All OK!!")
+		panic(err)
 	}
 
-	defer mongoSession.Close()
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Println("PING!!!")
+	}
+	defer client.Disconnect(ctx)
 	// // Init; with real/dummy
-	repo.New()
+	// repo.New()
 	// // Gte the needed data ..
 	// repo.ReadSecrets()
 }
