@@ -1,0 +1,6 @@
+# Specific project ignores ..
+
+# Ignore please output 
+plz-out
+.plz-cache
+
