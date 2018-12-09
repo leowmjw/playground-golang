@@ -7,3 +7,7 @@
 ; when you change it all users will automatically get updated.
 ; [please]
 ; version = 13.2.7
+
+[go]
+
+ImportPath = "github.com/leowmjw/playground-golang/MONGOFF"

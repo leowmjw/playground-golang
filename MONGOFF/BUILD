@@ -3,13 +3,14 @@ go_binary(
   srcs = ['main.go'], 
   out = 'mongoff',
   deps =  [
-    '//:mgo', '//:ff', '//:ctxlog', '//:ulid',
+    '//third_party/go:mgo', 
+    '//:ff', '//:ctxlog', '//:ulid',
     '//:run', '//:mergo', '//:hclog', '//repo'
   ],
 )
 
 # All the deps ..
-go_get(name = "mgo", get = "github.com/globalsign/mgo")
+# go_get(name = "mgo", get = "github.com/globalsign/mgo")
 
 go_get(name = 'ff', get = 'github.com/peterbourgon/ff', deps = ['//:pkgerr'])
 go_get(name = 'pkgerr', get = 'github.com/pkg/errors')
