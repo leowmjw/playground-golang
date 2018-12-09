@@ -4,7 +4,7 @@ go_binary(
   out = 'mongoff',
   deps =  [
     '//:mgo', '//:ff', '//:ctxlog', '//:ulid',
-    '//:run', '//:mergo', '//:hclog'
+    '//:run', '//:mergo', '//:hclog', '//repo'
   ],
 )
 

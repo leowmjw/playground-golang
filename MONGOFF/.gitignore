@@ -1,6 +1,10 @@
 # Specific project ignores ..
+main
 
 # Ignore please output 
 plz-out
 .plz-cache
+
+# Ignore direnv stuff
+.envrc*
 
