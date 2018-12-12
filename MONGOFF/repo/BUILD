@@ -9,8 +9,6 @@ go_library(
     visibility = ["PUBLIC"],
     deps = [
         '//third_party/go:mgo',
+        '//third_party/go:ulid',
     ],
 )
-
-# All the deps ..
-# go_get(name = "mgo", get = "github.com/globalsign/mgo", visibility = ['PUBLIC'],)

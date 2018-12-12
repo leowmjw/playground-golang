@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"time"
 
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/readpref"
+	"github.com/leowmjw/playground-golang/MONGOFF/repo"
 )
 
 const (
@@ -20,24 +17,24 @@ const (
 
 func main() {
 
-	fmt.Println("MongoDB + FF! Cool!!")
+	fmt.Println("MongoDB + FF! Coolio!!")
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, MongoDBURL)
+	// ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	// client, err := mongo.Connect(ctx, MongoDBURL)
 
-	if err != nil {
-		panic(err)
-	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	err = client.Ping(ctx, readpref.Primary())
-	if err != nil {
-		panic(err)
-	} else {
-		fmt.Println("PING!!!")
-	}
-	defer client.Disconnect(ctx)
+	// err = client.Ping(ctx, readpref.Primary())
+	// if err != nil {
+	// 	panic(err)
+	// } else {
+	// 	fmt.Println("PING!!!")
+	// }
+	// defer client.Disconnect(ctx)
 	// // Init; with real/dummy
-	// repo.New()
+	repo.New()
 	// // Gte the needed data ..
 	// repo.ReadSecrets()
 }
