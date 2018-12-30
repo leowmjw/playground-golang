@@ -36,5 +36,5 @@ func main() {
 	// // Init; with real/dummy
 	repo.New()
 	// // Gte the needed data ..
-	// repo.ReadSecrets()
+	repo.ReadSecrets()
 }

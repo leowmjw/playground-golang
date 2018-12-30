@@ -9,7 +9,13 @@ package(default_visibility = ['PUBLIC'])
 go_get(
     name = 'mgo',
     get = 'github.com/globalsign/mgo',
-    deps = []
+    deps = [],
+    install = [
+        '.', 
+        'bson',
+        'internal/scram',
+        'internal/json',
+    ],
 )
 
 go_get(name = 'ff', get = 'github.com/peterbourgon/ff', deps = ['//third_party/go:pkgerr'])
