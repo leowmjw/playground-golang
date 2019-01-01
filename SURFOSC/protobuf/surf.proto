@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package surf;
+
+
+service Ping {
+    rpc Ping(PingRequest) returns (PingResponse) {
+    }
+    rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
+    }
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+    string message = 1;
+}
+
+message ListServicesRequest {
+    repeated string include = 1;
+    repeated string exclude = 2;
+}
+
+message ServiceDetails {
+    string name = 1;
+    int32 count = 2;
+    string status = 3;
+}
+
+message ListServicesResponse {
+    // can be one of: OK, DEGRADED, DOWN
+    string status = 1;
+    repeated ServiceDetails services = 2;
+}

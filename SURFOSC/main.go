@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/y0ssar1an/q"
 	"gopkg.in/headzoo/surf.v1"
 )
 
@@ -25,10 +25,13 @@ func main() {
 	// Outputs: "newest submissions: reddit.com"
 	fmt.Println(bow.Title())
 
+	q.Q(bow.Body())
+
 	// Log in to the site.
 	for _, form := range bow.Forms() {
 		if form != nil {
-			spew.Dump(form.Method())
+			//spew.Dump(form.Method())
+			q.Q(form.Dom().Last().Text())
 			form.Input("user", "JoeRedditor")
 			form.Input("passwd", "d234rlkasd")
 			if form.Submit() != nil {
