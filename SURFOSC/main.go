@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/y0ssar1an/q"
 	"gopkg.in/headzoo/surf.v1"
 	"gopkg.in/headzoo/surf.v1/agent"
+	"gopkg.in/headzoo/surf.v1/errors"
+	"net/url"
 )
 
 func main() {
@@ -28,9 +31,9 @@ func BasicOSCDemo() {
 		if form != nil {
 			//spew.Dump(form.Method())
 			// See as HTML
-			q.Q(form.Dom().Html())
+			//q.Q(form.Dom().Html())
 			// See form as Text
-			q.Q(form.Dom().Text())
+			//q.Q(form.Dom().Text())
 			// Default it is search by Requester
 			// Search by project name (e.g Summary description)
 			form.Input("Pilih", "3")
@@ -43,13 +46,62 @@ func BasicOSCDemo() {
 				panic(err)
 			}
 			// see the results as HTML
-			q.Q(bow.Dom().Html())
+			//q.Q(bow.Dom().Html())
 			//see the results as Text
-			q.Q(bow.Dom().Text())
+			//q.Q(bow.Dom().Text())
 			// See all the links
-			q.Q(bow.Links())
+			//q.Q(bow.Links())
+			// Find and iterate through the result rows
+			bow.Find("html body table tbody tr td table tbody tr td table tbody tr td table tbody tr").Siblings().Each(func(i int, s *goquery.Selection) {
+				//q.Q("ID:", i, " DATA:", s.Text())
+				s.Children().Each(func(j int, c *goquery.Selection) {
+					// Bil
+					// Nama Projek
+					// No. Lot
+					// Mukim
+					// Link
+					if j == 0 {
+						q.Q("BIL: ", c.Text())
+					} else if j == 1 {
+						q.Q("PROJEK: ", c.Text())
+					} else if j == 2 {
+						q.Q("LOT: ", c.Text())
+					} else if j == 3 {
+						q.Q("MUKIM: ", c.Text())
+					} else if j == 4 {
+						q.Q("LINK: ", c.Find("a").Map(func(_ int, m *goquery.Selection) string {
+							href, err := attrToResolvedUrl("href", m)
+							if err != nil {
+								panic(err)
+							}
+							return spew.Sprint(href)
+						}))
+					} else {
+						q.Q("UNKNOWN:", c)
+					}
+				})
+			})
 		}
 	}
+}
+
+func attrToResolvedUrl(name string, sel *goquery.Selection) (*url.URL, error) {
+	src, ok := sel.Attr(name)
+	if !ok {
+		return nil, errors.NewAttributeNotFound(
+			"Attribute '%s' not found.", name)
+	}
+	ur, err := url.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+
+	q.Q("src:", src, "URL:", ur)
+	return ur, nil
+}
+
+func buildNextPage(pageNum int) string {
+	return fmt.Sprintf("http://?page=", pageNum)
 }
 
 func BasicRedditDemo() {
