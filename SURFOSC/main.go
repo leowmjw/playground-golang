@@ -1,20 +1,52 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"github.com/y0ssar1an/q"
 	"gopkg.in/headzoo/surf.v1"
 	"gopkg.in/headzoo/surf.v1/agent"
 	"gopkg.in/headzoo/surf.v1/errors"
 	"net/url"
+	"os"
+	"time"
 )
 
 func main() {
 	fmt.Println("Welcome to gomod SurfOSCv3!!")
 	//BasicRedditDemo()
-	BasicOSCDemo()
+	//BasicOSCDemo()
+	BasicMongoConnection()
+}
+
+func BasicMongoConnection() {
+	fmt.Println("Initializing repo with the MongoDB instance ..")
+	// To test in CLI; run the following command ..
+	// $ mongo "mongodb+srv://sinarcluster0-olstf.mongodb.net/test" --username mleow
+	mongoDBURL := os.Getenv("MONGODB_URL")
+	//mongoDBURL := "mongodb+srv://<USER>:<PASS>@sinarcluster0-olstf.mongodb.net/test?retryWrites=true"
+	if mongoDBURL == "" {
+		panic("MONGODB_URL needs to be defined!! e.g mongodb://<dbuser>:<dbpassword>@sinarcluster0-olstf.mongodb.net/test?retryWrites=true")
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	// Addition of appName will distinguish between applications in logs?
+	client, err := mongo.Connect(ctx, fmt.Sprintf("%s&appName=oscv3", mongoDBURL))
+	if err != nil {
+		panic(err)
+	}
+	defer client.Disconnect(ctx)
+	err = client.Ping(ctx, readpref.SecondaryPreferred())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Ping OK!!")
+	// if it is a DB without access; it will get timeout; weird!
+	q.Q(client.Database("cooljoe").Collection("quotes").EstimatedDocumentCount(ctx))
+
 }
 
 func BasicOSCDemo() {
