@@ -11,6 +11,7 @@ import (
 	"gopkg.in/headzoo/surf.v1"
 	"gopkg.in/headzoo/surf.v1/agent"
 	"gopkg.in/headzoo/surf.v1/errors"
+	"io"
 	"net/url"
 	"os"
 	"time"
@@ -20,7 +21,94 @@ func main() {
 	fmt.Println("Welcome to gomod SurfOSCv3!!")
 	//BasicRedditDemo()
 	//BasicOSCDemo()
-	BasicMongoConnection()
+	//BasicMongoConnection()
+	BasicCrawl10Pages()
+}
+
+//go:generate stringer -type=SearchType
+func BasicCrawl10Pages() {
+
+	var pageLimit = 10
+	var searchTerm = "PENGAWAL"
+
+	type SearchType string
+	const (
+		Unknown       SearchType = "1"
+		ByProject     SearchType = "2"
+		ByDescription SearchType = "3"
+	)
+
+	type LocalAuthority string
+	const (
+		InvalidLocalCouncil LocalAuthority = "0000"
+		KulimIndustrialPark LocalAuthority = "0212"
+	)
+
+	fmt.Println("LIMIT:", pageLimit, "TERM: ", searchTerm, "TYPE: ", ByDescription)
+	// Go to the OSCv3 page and fill up the form and post it!
+	bow := surf.NewBrowser()
+	bow.SetUserAgent(agent.Firefox())
+	err := bow.Open("http://www.epbt.gov.my/osc/Carian_Projek.cfm")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, form := range bow.Forms() {
+		if form != nil {
+			//spew.Dump(form.Method())
+			// See as HTML
+			//q.Q(form.Dom().Html())
+			// See form as Text
+			//q.Q(form.Dom().Text())
+			// Default it is search by Requester
+			// Search by project name (e.g Summary description)
+			form.Input("Pilih", "3")
+			// Seach term; leave empty for everything
+			form.Input("Cari", "PENGAWAL")
+			// Select Taman Perindustrian Kulim
+			form.Input("BahKod", "0212")
+			// Submit
+			if form.Submit() != nil {
+				panic(err)
+			}
+
+			// Dump out URL
+			q.Q(bow.Url().String())
+
+			// Dump out HTML into file for further processing
+			html, err := bow.Dom().Html()
+			if err != nil {
+				panic(err)
+			}
+			htmlout, err := os.Create("raw/20190201-uniq-id-for-search-term-2.html")
+			if err != nil {
+				panic(err)
+			}
+			_, werr := io.WriteString(htmlout, html)
+			if werr != nil {
+				panic(werr)
+			}
+
+			// DUmp out to text file for further processing
+			text := bow.Dom().Text()
+			textout, err := os.Create("raw/20190201-uniq-id-for-search-term-2.txt")
+			if err != nil {
+				panic(err)
+			}
+			_, wterr := io.WriteString(textout, text)
+			if wterr != nil {
+				panic(wterr)
+			}
+
+		}
+	}
+}
+
+func BasicBadgerConnection() {
+	// Utilize the ability for versions in Badger ..
+	// Open for Read-Write
+
+	// Later; open Read-only for further processing ..
 }
 
 func BasicMongoConnection() {

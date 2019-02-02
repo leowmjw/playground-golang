@@ -1,2 +1,6 @@
 # Ignore binary
 SURFOSC
+# Ignore badgar data directory
+data
+# Ignore raw scrape pages
+raw
