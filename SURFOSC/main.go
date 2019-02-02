@@ -15,6 +15,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -33,13 +34,34 @@ func BasicCollyAllPagesLink() {
 	// Instantiate default collector
 	c := colly.NewCollector(
 		// Visit only domains: hackerspaces.org, wiki.hackerspaces.org
-		colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
+		//colly.AllowedDomains("http://www.epbt.gov.my"),
+
+		colly.URLFilters(
+			regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/$"),
+			regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/Carian_Proj3.+$"),
+		),
 	)
+
+	// On every a element which has href attribute print full link
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		//fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+		// Visit link found on page
+		rePattern := regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/Carian_Proj3.+$")
+
+		if rePattern.Match([]byte(e.Request.AbsoluteURL(link))) {
+			// Only those links are visited which are in AllowedDomains
+			fmt.Println(e.Request.AbsoluteURL(link))
+
+		}
+	})
 
 	// OnEach a href; filter out those with know search result page
 	// and obtain the full goto URL for further visits ..
 	// Start scraping on https://hackerspaces.org
-	c.Visit("https://hackerspaces.org/")
+	c.Visit("http://www.epbt.gov.my/osc/Carian_Proj3.cfm?CurrentPage=1&Maxrows=15&Cari=&AgensiKod=0212&Pilih=3")
+
 }
 
 func BasicCrawl10Pages() {
