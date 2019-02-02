@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gocolly/colly"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"github.com/y0ssar1an/q"
@@ -22,10 +23,25 @@ func main() {
 	//BasicRedditDemo()
 	//BasicOSCDemo()
 	//BasicMongoConnection()
-	BasicCrawl10Pages()
+	//BasicCrawl10Pages()
+	BasicCollyAllPagesLink()
 }
 
-//go:generate stringer -type=SearchType
+func BasicCollyAllPagesLink() {
+
+	// Submit form
+	// Instantiate default collector
+	c := colly.NewCollector(
+		// Visit only domains: hackerspaces.org, wiki.hackerspaces.org
+		colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
+	)
+
+	// OnEach a href; filter out those with know search result page
+	// and obtain the full goto URL for further visits ..
+	// Start scraping on https://hackerspaces.org
+	c.Visit("https://hackerspaces.org/")
+}
+
 func BasicCrawl10Pages() {
 
 	var pageLimit = 10
