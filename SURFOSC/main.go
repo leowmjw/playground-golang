@@ -6,6 +6,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/queue"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/readpref"
 	"github.com/y0ssar1an/q"
@@ -42,6 +43,19 @@ func BasicCollyAllPagesLink() {
 		),
 	)
 
+	// Queue
+	q, _ := queue.New(
+		2, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
+
+	// Result page ..
+	d := colly.NewCollector()
+	d.OnScraped(func(r *colly.Response) {
+		fmt.Println("FINISH: ", r.Request.URL)
+		fmt.Println(r.Headers)
+	})
+
 	// On every a element which has href attribute print full link
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
@@ -52,9 +66,14 @@ func BasicCollyAllPagesLink() {
 
 		if rePattern.Match([]byte(e.Request.AbsoluteURL(link))) {
 			// Only those links are visited which are in AllowedDomains
-			fmt.Println(e.Request.AbsoluteURL(link))
-
+			//fmt.Println(e.Request.AbsoluteURL(link))
+			q.AddURL(e.Request.AbsoluteURL(link))
 		}
+	})
+
+	c.OnScraped(func(r *colly.Response) {
+		// Now run the queue
+		q.Run(d)
 	})
 
 	// OnEach a href; filter out those with know search result page
