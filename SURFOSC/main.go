@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -31,8 +32,104 @@ func main() {
 
 func BasicCollyAllPagesLink() {
 
+	//Borang INFO page
+	f := colly.NewCollector()
+	f.OnRequest(func(r *colly.Request) {
+		fmt.Println("START: aaaaaaaaaaaaaaaaa")
+		fmt.Println("BORANG_INFO: ID: ", r.URL.Query().Get("ID"), " FORM: ", r.URL.Query().Get("NoForm"))
+	})
+	f.OnScraped(func(r *colly.Response) {
+		fmt.Println("BORANG_INFO: ", r.Request.URL, "<dddddddddddddd")
+		// File looks like _osc_Borang_info.cfm_ID_261483_NoForm_Form4.html
+		// Might hierarchy it with date timestamp ..
+		r.Save(fmt.Sprintf("data/%s.html", r.FileName()))
+		q.Q("FILE: ", r.FileName())
+		q.Q("SAVED ==================>")
+
+		//fmt.Println(r.Headers)
+	})
+
+	// INFO Result page ..
+	//Queue for Borang
+	queueBorang, _ := queue.New(
+		2, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
+	e := colly.NewCollector()
+	e.OnRequest(func(r *colly.Request) {
+		fmt.Println("START: xxxxxxxxxxxxxxxxxxxxxxxxx")
+		fmt.Println("PAGE_INFO:", r.URL.Query().Get("CurrentPage"))
+	})
+	e.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		//fmt.Printf("PAGE_INFO: Link found: %q -> %s\n", e.Text, link)
+		// Visit Info link found on page
+		//Example: Proj1_Info.cfm?Name=340336&S=S
+		rePattern := regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/Borang_info.+$")
+
+		if rePattern.Match([]byte(e.Request.AbsoluteURL(link))) {
+			// Only those links are visited which are in AllowedDomains
+			//q.Q(e.Request.AbsoluteURL(link))
+			queueBorang.AddURL(e.Request.AbsoluteURL(link))
+		}
+
+	})
+	e.OnScraped(func(r *colly.Response) {
+		fmt.Println("FINISH_INFO: ", r.Request.URL, "<yyyyyyyyyyyyy")
+		// TODO: Save Page INFO ..
+		r.Save(fmt.Sprintf("data/%s.html", r.FileName()))
+		q.Q("FILE: ", r.FileName())
+		q.Q("SAVED ==================>")
+		//fmt.Println(r.Headers)
+		queueBorang.Run(f)
+	})
+
+	// Result page ..
+	//Queue for Info
+	queueInfo, _ := queue.New(
+		2, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
+	d := colly.NewCollector()
+
+	d.OnRequest(func(r *colly.Request) {
+		fmt.Println("START: ********************", r.URL)
+		fmt.Println("PAGE:", r.URL.Query().Get("CurrentPage"))
+	})
+	d.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		//fmt.Printf("PAGE: Link found: %q -> %s\n", e.Text, link)
+		// Visit Info link found on page
+		//Example: Proj1_Info.cfm?Name=340336&S=S
+		rePattern := regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/Proj1_Info.+$")
+
+		if rePattern.Match([]byte(e.Request.AbsoluteURL(link))) {
+			// Only those links are visited which are in AllowedDomains
+			//q.Q(e.Request.AbsoluteURL(link))
+			queueInfo.AddURL(e.Request.AbsoluteURL(link))
+		}
+
+	})
+	d.OnScraped(func(r *colly.Response) {
+		fmt.Println("FINISH: ", r.Request.URL, "<================")
+		// TODO: Save Page 2 ..
+		r.Save(fmt.Sprintf("data/%s.html", r.FileName()))
+		q.Q("FILE: ", r.FileName())
+		q.Q("SAVED ==================>")
+		//fmt.Println(r.Headers)
+		queueInfo.Run(e)
+	})
+
 	// Submit form
 	// Instantiate default collector
+	// Queue
+	queue, _ := queue.New(
+		2, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
+
 	c := colly.NewCollector(
 		// Visit only domains: hackerspaces.org, wiki.hackerspaces.org
 		//colly.AllowedDomains("http://www.epbt.gov.my"),
@@ -42,19 +139,6 @@ func BasicCollyAllPagesLink() {
 			regexp.MustCompile("http://www\\.epbt\\.gov\\.my/osc/Carian_Proj3.+$"),
 		),
 	)
-
-	// Queue
-	q, _ := queue.New(
-		2, // Number of consumer threads
-		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
-	)
-
-	// Result page ..
-	d := colly.NewCollector()
-	d.OnScraped(func(r *colly.Response) {
-		fmt.Println("FINISH: ", r.Request.URL)
-		fmt.Println(r.Headers)
-	})
 
 	// On every a element which has href attribute print full link
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -66,20 +150,35 @@ func BasicCollyAllPagesLink() {
 
 		if rePattern.Match([]byte(e.Request.AbsoluteURL(link))) {
 			// Only those links are visited which are in AllowedDomains
-			//fmt.Println(e.Request.AbsoluteURL(link))
-			q.AddURL(e.Request.AbsoluteURL(link))
+			//q.Q(e.Request.AbsoluteURL(link))
+			// TODO: For testing; limit to 2/3 pages only
+			//e.Request.URL.Query().Get("CurrentPage") --> int
+			currentPage, err := strconv.Atoi(e.Request.URL.Query().Get("CurrentPage"))
+			if err != nil {
+				panic(err)
+			}
+			if currentPage < 2 {
+				queue.AddURL(e.Request.AbsoluteURL(link))
+			} else {
+				panic(fmt.Errorf("PAGE: %i", currentPage))
+				fmt.Println("SKIP: Page: ", currentPage)
+			}
 		}
 	})
 
 	c.OnScraped(func(r *colly.Response) {
+		// TODO: Save Page 1
+		r.Save(fmt.Sprintf("data/%s.html", r.FileName()))
+		q.Q("FILE: ", r.FileName())
+		q.Q("SAVED ==================>")
 		// Now run the queue
-		q.Run(d)
+		queue.Run(d)
 	})
 
 	// OnEach a href; filter out those with know search result page
 	// and obtain the full goto URL for further visits ..
 	// Start scraping on https://hackerspaces.org
-	c.Visit("http://www.epbt.gov.my/osc/Carian_Proj3.cfm?CurrentPage=1&Maxrows=15&Cari=&AgensiKod=0212&Pilih=3")
+	c.Visit("http://www.epbt.gov.my/osc/Carian_Proj3.cfm?CurrentPage=1&Maxrows=2&Cari=&AgensiKod=0212&Pilih=3")
 
 }
 
