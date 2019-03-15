@@ -3,6 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/url"
+	"os"
+	"regexp"
+	"strconv"
+	"time"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gocolly/colly"
@@ -13,12 +20,6 @@ import (
 	"gopkg.in/headzoo/surf.v1"
 	"gopkg.in/headzoo/surf.v1/agent"
 	"gopkg.in/headzoo/surf.v1/errors"
-	"io"
-	"net/url"
-	"os"
-	"regexp"
-	"strconv"
-	"time"
 )
 
 func main() {
@@ -27,7 +28,22 @@ func main() {
 	//BasicOSCDemo()
 	//BasicMongoConnection()
 	//BasicCrawl10Pages()
-	BasicCollyAllPagesLink()
+	//BasicCollyAllPagesLink()
+	BasicCollyFromRaw()
+}
+
+func BasicCollyFromRaw() {
+	// From the collection; can run another round while tweaking the strcuture
+	// Removing the extra cost of network and being blocked ..
+
+	c := colly.NewCollector(
+		colly.UserAgent("Sinar Project :P"),
+	)
+	c.OnError(func(r *colly.Response, e error) {
+		fmt.Println("DIE!!!")
+		q.Q(r.Request.URL, r.StatusCode)
+		panic(e)
+	})
 }
 
 func BasicCollyAllPagesLink() {

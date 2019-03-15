@@ -7,7 +7,7 @@ require (
 	github.com/antchfx/xpath v0.0.0-20190129040759-c8489ed3251e // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/gocolly/colly v1.1.0 // indirect
+	github.com/gocolly/colly v1.1.0
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/headzoo/surf v1.0.0 // indirect
 	github.com/headzoo/ut v0.0.0-20181013193318-a13b5a7a02ca // indirect
