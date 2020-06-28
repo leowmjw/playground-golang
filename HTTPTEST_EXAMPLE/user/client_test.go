@@ -19,8 +19,6 @@ func Test_doGetREST(t *testing.T) {
 	// For now, standard httpClient
 	baseURL := "http://localhost:8080" // To put httptest?
 	usc := NewUserServiceClient(baseURL)
-	// Finished setup; run  tests (in Parallel)
-	t.Parallel()
 	tests := []struct {
 		name       string
 		args       args
@@ -55,33 +53,32 @@ func Test_doGetREST(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Can be parallel to be faster!!
 			t.Parallel()
-
 			// Will tweak based on diff scenarios ..
 			f := func(err error) error {
 				if isTimeoutError(err) {
+					var wg sync.WaitGroup
 					errorMessage := "URL: " + tt.args.fullURL
-					wg := sync.WaitGroup{}
 					// Run internal Health
+					wg.Add(1)
 					go func() {
+						defer wg.Done()
 						// Call healthcheck to see if service itself is OK
 						log.Println("Check calling service health!!")
-						wg.Add(1)
 						herr := doGetREST(tt.args.fullHealthURL, usc.httpClient, nil)
 						if herr != nil {
 							errorMessage = errorMessage + ">HEALTH: " + herr.Error()
 						}
-						wg.Done()
 					}()
 					// Run External check
+					wg.Add(1)
 					go func() {
+						defer wg.Done()
 						// Call External to see if overall network is OK
 						log.Println("Check calling external API!!")
-						wg.Add(1)
 						xerr := doGetREST(tt.args.fullExternalURL, usc.httpClient, nil)
 						if xerr != nil {
 							errorMessage = errorMessage + ">EXTERNAL: " + xerr.Error()
 						}
-						wg.Done()
 					}()
 					// Block until all are done
 					wg.Wait()
