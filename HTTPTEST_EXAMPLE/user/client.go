@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -46,25 +47,34 @@ func (usc UserServiceClient) SlowUserService() error {
 	// Define a failure Handler for possible slow cases where we want to probe
 	f := func(err error) error {
 		if isTimeoutError(err) {
-			errorMessage := "URL: " + fullURL
-			// Call healthcheck to see if service itself is OK
-			log.Println("Check calling service health!!")
-			fullHealthURL := usc.baseURL + "/health"
-			// Slow version
-			//fullHealthURL := usc.baseURL + "/slow"
-			herr := doGetREST(fullHealthURL, usc.httpClient, nil)
-			if herr != nil {
-				errorMessage = errorMessage + ">HEALTH: " + herr.Error()
-			}
-			// Call External to see if overall network is OK
-			log.Println("Check calling external API!!")
-			fullExternalURL := "https://jsonplaceholder.typicode.com/users/3"
-			// Slow version
-			//fullExternalURL := usc.baseURL + "/slow"
-			xerr := doGetREST(fullExternalURL, usc.httpClient, nil)
-			if xerr != nil {
-				errorMessage = errorMessage + ">EXTERNAL: " + xerr.Error()
-			}
+			var wg sync.WaitGroup
+			errorMessage := "isTimeoutError()"
+			// Run internal Health
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// Call healthcheck to see if service itself is OK
+				log.Println("Check calling service health!!")
+				fullHealthURL := usc.baseURL + "/health"
+				herr := doGetREST(fullHealthURL, usc.httpClient, nil)
+				if herr != nil {
+					errorMessage = errorMessage + "-->HEALTH: isTimeoutError()"
+				}
+			}()
+			// Run External check
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// Call External to see if overall network is OK
+				log.Println("Check calling external API!!")
+				fullExternalURL := "https://jsonplaceholder.typicode.com/users/3"
+				xerr := doGetREST(fullExternalURL, usc.httpClient, nil)
+				if xerr != nil {
+					errorMessage = errorMessage + "-->EXTERNAL: isTimeoutError()"
+				}
+			}()
+			// Block until all are done
+			wg.Wait()
 			return fmt.Errorf("TIMEOUT: %s", errorMessage)
 		}
 		return err
