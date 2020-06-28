@@ -16,5 +16,8 @@ func main() {
 	// Query user byID
 	usc.QueryUserService()
 	// Slow response
-	usc.SlowUserService()
+	serr := usc.SlowUserService()
+	if serr != nil {
+		fmt.Println("ERR:", serr.Error())
+	}
 }

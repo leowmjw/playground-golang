@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 type UserServiceClient struct {
@@ -29,49 +27,41 @@ func NewUserServiceClient(baseURL string) UserServiceClient {
 }
 
 func (usc UserServiceClient) QueryExternal() error {
-	//fullURL := "https://jsonplaceholder.typicode.com/users/3"
-	resp, err := usc.httpClient.Get("https://jsonplaceholder.typicode.com/users/3")
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		spew.Dump(resp.Status)
-		log.Fatal("Unexpected status!")
-	}
-	mybody, rerr := ioutil.ReadAll(resp.Body)
-	if rerr != nil {
-		panic(rerr)
-	}
-	fmt.Println(string(mybody))
-	return nil
+	fullURL := "https://jsonplaceholder.typicode.com/users/3"
+	return doGetREST(fullURL, usc.httpClient, nil)
 }
 
 func (usc UserServiceClient) QueryUserService() error {
-	//fullURL := usc.baseURL + "/query"
-	return usc.callUserService("/query", nil)
+	fullURL := usc.baseURL + "/query"
+	return doGetREST(fullURL, usc.httpClient, nil)
 }
 
 func (usc UserServiceClient) HealthUserService() error {
-	//fullURL := usc.baseURL + "/health"
-	return usc.callUserService("/health", nil)
+	fullURL := usc.baseURL + "/health"
+	return doGetREST(fullURL, usc.httpClient, nil)
 }
 
 func (usc UserServiceClient) SlowUserService() error {
-	//fullURL := usc.baseURL + "/slow"
+	fullURL := usc.baseURL + "/slow"
 	// Define a failure Handler for possible slow cases where we want to probe
 	f := func(err error) error {
 		if isTimeoutError(err) {
-			errorMessage := "URL: " + err.Error()
+			errorMessage := "URL: " + fullURL
 			// Call healthcheck to see if service itself is OK
 			log.Println("Check calling service health!!")
-			herr := usc.HealthUserService()
+			fullHealthURL := usc.baseURL + "/health"
+			// Slow version
+			//fullHealthURL := usc.baseURL + "/slow"
+			herr := doGetREST(fullHealthURL, usc.httpClient, nil)
 			if herr != nil {
 				errorMessage = errorMessage + ">HEALTH: " + herr.Error()
 			}
 			// Call External to see if overall network is OK
 			log.Println("Check calling external API!!")
-			xerr := usc.QueryExternal()
+			fullExternalURL := "https://jsonplaceholder.typicode.com/users/3"
+			// Slow version
+			//fullExternalURL := usc.baseURL + "/slow"
+			xerr := doGetREST(fullExternalURL, usc.httpClient, nil)
 			if xerr != nil {
 				errorMessage = errorMessage + ">EXTERNAL: " + xerr.Error()
 			}
@@ -79,33 +69,7 @@ func (usc UserServiceClient) SlowUserService() error {
 		}
 		return err
 	}
-	return usc.callUserService("/slow", f)
-}
-
-func (usc UserServiceClient) callUserService(urlpath string, failureHandler func(error) error) error {
-	resp, err := usc.httpClient.Get(usc.baseURL + urlpath)
-	if err != nil {
-		// DEBUG
-		//log.Println(err.Error())
-		if failureHandler != nil {
-			// If it fails; try the fallback connections to diagnose further
-			return failureHandler(err)
-		}
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		spew.Dump(resp.Status)
-		log.Fatal("Unexpected status!")
-	}
-	mybody, rerr := ioutil.ReadAll(resp.Body)
-	if rerr != nil {
-		panic(rerr)
-		return nil
-	}
-	fmt.Println(string(mybody))
-
-	return nil
+	return doGetREST(fullURL, usc.httpClient, f)
 }
 
 func doGetREST(fullURL string, client *http.Client, failureHandler func(error) error) error {
