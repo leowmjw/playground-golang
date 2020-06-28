@@ -1,6 +1,9 @@
 package user
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/davecgh/go-spew/spew"
@@ -28,13 +31,15 @@ func (usc UserServiceClient) QueryUserService() error {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	mybody := make([]byte, 0)
-	_, rerr := resp.Body.Read(mybody)
+	if resp.StatusCode != http.StatusOK {
+		spew.Dump(resp.Status)
+		log.Fatal("Unexpected status!")
+	}
+	mybody, rerr := ioutil.ReadAll(resp.Body)
 	if rerr != nil {
 		panic(rerr)
 	}
-	spew.Dump(resp.Status)
-	spew.Dump(mybody)
+	fmt.Println(string(mybody))
 	return nil
 }
 
@@ -44,12 +49,32 @@ func (usc UserServiceClient) HealthUserService() error {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	mybody := make([]byte, 0)
-	_, rerr := resp.Body.Read(mybody)
+	if resp.StatusCode != http.StatusOK {
+		spew.Dump(resp.Status)
+		log.Fatal("Unexpected status!")
+	}
+	mybody, rerr := ioutil.ReadAll(resp.Body)
 	if rerr != nil {
 		panic(rerr)
 	}
-	spew.Dump(resp.Status)
-	spew.Dump(mybody)
+	fmt.Println(string(mybody))
+	return nil
+}
+
+func (usc UserServiceClient) SlowUserService() error {
+	resp, err := usc.httpClient.Get(usc.baseURL + "/slow")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		spew.Dump(resp.Status)
+		log.Fatal("Unexpected status!")
+	}
+	mybody, rerr := ioutil.ReadAll(resp.Body)
+	if rerr != nil {
+		panic(rerr)
+	}
+	fmt.Println(string(mybody))
 	return nil
 }

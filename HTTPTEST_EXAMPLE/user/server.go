@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 // Try various server  implementation; integration tests?
@@ -13,5 +14,16 @@ func StartUserService() {
 		io.WriteString(w, "OK!")
 	}
 	http.HandleFunc("/health", healthHandler)
+	queryHandler := func(w http.ResponseWriter, req *http.Request) {
+		//w.WriteHeader(http.StatusForbidden)
+		io.WriteString(w, "{\"id\":\"42\",\"name\":\"Michael\"}")
+	}
+	http.HandleFunc("/query", queryHandler)
+	slowHandler := func(w http.ResponseWriter, req *http.Request) {
+		time.Sleep(2 * time.Second)
+		//w.WriteHeader(http.StatusGatewayTimeout)
+		io.WriteString(w, "Should NOT see this :( !!!")
+	}
+	http.HandleFunc("/slow", slowHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

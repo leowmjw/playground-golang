@@ -15,4 +15,6 @@ func main() {
 	usc.HealthUserService()
 	// Query user byID
 	usc.QueryUserService()
+	// Slow response
+	usc.SlowUserService()
 }
