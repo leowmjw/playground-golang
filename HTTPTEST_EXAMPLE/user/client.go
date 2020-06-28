@@ -29,6 +29,7 @@ func NewUserServiceClient(baseURL string) UserServiceClient {
 }
 
 func (usc UserServiceClient) QueryExternal() error {
+	//fullURL := "https://jsonplaceholder.typicode.com/users/3"
 	resp, err := usc.httpClient.Get("https://jsonplaceholder.typicode.com/users/3")
 	if err != nil {
 		panic(err)
@@ -47,85 +48,50 @@ func (usc UserServiceClient) QueryExternal() error {
 }
 
 func (usc UserServiceClient) QueryUserService() error {
-	resp, err := usc.httpClient.Get(usc.baseURL + "/query")
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		spew.Dump(resp.Status)
-		log.Fatal("Unexpected status!")
-	}
-	mybody, rerr := ioutil.ReadAll(resp.Body)
-	if rerr != nil {
-		panic(rerr)
-	}
-	fmt.Println(string(mybody))
-	return nil
+	//fullURL := usc.baseURL + "/query"
+	return usc.callUserService("/query", nil)
 }
 
 func (usc UserServiceClient) HealthUserService() error {
-	resp, err := usc.httpClient.Get(usc.baseURL + "/health")
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		spew.Dump(resp.Status)
-		log.Fatal("Unexpected status!")
-	}
-	mybody, rerr := ioutil.ReadAll(resp.Body)
-	if rerr != nil {
-		panic(rerr)
-	}
-	fmt.Println(string(mybody))
-	return nil
+	//fullURL := usc.baseURL + "/health"
+	return usc.callUserService("/health", nil)
 }
 
 func (usc UserServiceClient) SlowUserService() error {
-	// *url.Error
-	//usc.baseURL = "http://localhost:8888"
-	resp, err := usc.httpClient.Get(usc.baseURL + "/slow")
-	if err != nil {
-		//spew.Dump(err)
-		log.Println(err.Error())
-		//time.Sleep(time.Second)
-		log.Println(isTimeoutError(err))
+	//fullURL := usc.baseURL + "/slow"
+	// Define a failure Handler for possible slow cases where we want to probe
+	f := func(err error) error {
 		if isTimeoutError(err) {
-			// Call healthcheck to see  if network is OK
-			usc.HealthUserService()
-			usc.QueryExternal()
+			errorMessage := "URL: " + err.Error()
+			// Call healthcheck to see if service itself is OK
+			log.Println("Check calling service health!!")
+			herr := usc.HealthUserService()
+			if herr != nil {
+				errorMessage = errorMessage + ">HEALTH: " + herr.Error()
+			}
+			// Call External to see if overall network is OK
+			log.Println("Check calling external API!!")
+			xerr := usc.QueryExternal()
+			if xerr != nil {
+				errorMessage = errorMessage + ">EXTERNAL: " + xerr.Error()
+			}
+			return fmt.Errorf("TIMEOUT: %s", errorMessage)
 		}
-		return nil
+		return err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		spew.Dump(resp.Status)
-		log.Fatal("Unexpected status!")
-	}
-	mybody, rerr := ioutil.ReadAll(resp.Body)
-	if rerr != nil {
-		panic(rerr)
-		return nil
-	}
-	fmt.Println(string(mybody))
-	return nil
+	return usc.callUserService("/slow", f)
 }
 
-func (usc UserServiceClient) callUserService(urlpath string) error {
+func (usc UserServiceClient) callUserService(urlpath string, failureHandler func(error) error) error {
 	resp, err := usc.httpClient.Get(usc.baseURL + urlpath)
 	if err != nil {
 		// DEBUG
-		//spew.Dump(err)
 		//log.Println(err.Error())
-		//log.Println(isTimeoutError(err))
-		if isTimeoutError(err) {
-			// Call healthcheck to see if service itself is OK
-			usc.HealthUserService()
-			// Call External to see if overall network is OK
-			usc.QueryExternal()
+		if failureHandler != nil {
+			// If it fails; try the fallback connections to diagnose further
+			return failureHandler(err)
 		}
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
@@ -138,6 +104,31 @@ func (usc UserServiceClient) callUserService(urlpath string) error {
 		return nil
 	}
 	fmt.Println(string(mybody))
+
+	return nil
+}
+
+func doGetREST(fullURL string, client *http.Client, failureHandler func(error) error) error {
+	resp, err := client.Get(fullURL)
+	if err != nil {
+		// Use  failureHandler if available
+		if failureHandler != nil {
+			// If it fails; try the fallback connections to diagnose further
+			return failureHandler(err)
+		}
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		// Non-fatal error
+		return fmt.Errorf("Unexpected Response: %s", resp.Status)
+	}
+	mybody, rerr := ioutil.ReadAll(resp.Body)
+	if rerr != nil {
+		panic(rerr)
+	}
+	fmt.Println(string(mybody))
+	// Do something ...
 
 	return nil
 }
