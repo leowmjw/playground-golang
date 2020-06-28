@@ -1,13 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/leowmjw/playground-golang/HTTPTEST_EXAMPLE/user"
+)
 
 func main() {
-	fmt.Println("httptest examples ..")
+	fmt.Println("httptest Server ..")
 	// Start server
-	go StartUserService()
-	// Run  client and dump put result
-	usc := NewUserServiceClient("http://localhost:8080")
-	// Query service health
-	usc.QueryUserService()
+	user.StartUserService()
 }

@@ -1,4 +1,4 @@
-package main
+package user
 
 import (
 	"net/http"
@@ -23,6 +23,22 @@ func NewUserServiceClient(baseURL string) UserServiceClient {
 }
 
 func (usc UserServiceClient) QueryUserService() error {
+	resp, err := usc.httpClient.Get(usc.baseURL + "/query")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	mybody := make([]byte, 0)
+	_, rerr := resp.Body.Read(mybody)
+	if rerr != nil {
+		panic(rerr)
+	}
+	spew.Dump(resp.Status)
+	spew.Dump(mybody)
+	return nil
+}
+
+func (usc UserServiceClient) HealthUserService() error {
 	resp, err := usc.httpClient.Get(usc.baseURL + "/health")
 	if err != nil {
 		panic(err)
@@ -33,6 +49,7 @@ func (usc UserServiceClient) QueryUserService() error {
 	if rerr != nil {
 		panic(rerr)
 	}
+	spew.Dump(resp.Status)
 	spew.Dump(mybody)
 	return nil
 }
