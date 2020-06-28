@@ -15,6 +15,9 @@ type UserServiceClient struct {
 	httpClient *http.Client
 }
 
+// Package-wide singleton, not thread safe!!
+var timeoutCount int8
+
 // Client  that does the operations; start with no timeout first ..
 func NewUserServiceClient(baseURL string) UserServiceClient {
 	return UserServiceClient{
@@ -46,7 +49,13 @@ func (usc UserServiceClient) SlowUserService() error {
 	fullURL := usc.baseURL + "/slow"
 	// Define a failure Handler for possible slow cases where we want to probe
 	f := func(err error) error {
-		if isTimeoutError(err) {
+		fmt.Println("COUNT: ", timeoutCount)
+		// Naive cricuitbreaker so we don't spam upstream too  much!
+		// TODO: If less then 60 sec from last hit?
+		if isTimeoutError(err) && timeoutCount < 3 {
+			timeoutCount++
+			// Simple concurrent checks to upstream to determine if it is network issue
+			// TODO: Add the  http  tracing to see if it is DNS, header type issue
 			var wg sync.WaitGroup
 			errorMessage := "isTimeoutError()"
 			// Run internal Health

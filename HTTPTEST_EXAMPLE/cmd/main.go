@@ -20,4 +20,7 @@ func main() {
 	if serr != nil {
 		fmt.Println("ERR:", serr.Error())
 	}
+	usc.SlowUserService()
+	usc.SlowUserService()
+	usc.SlowUserService()
 }
