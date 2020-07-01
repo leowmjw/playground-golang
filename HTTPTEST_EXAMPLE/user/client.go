@@ -96,7 +96,7 @@ func traceGetREST(fullURL string, client *http.Client, failureHandler func(error
 	// Setup  the request
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	trace := &httptrace.ClientTrace{
-		// First time httpClient being set up
+		// First time httpClient being set up (via Dial)
 		ConnectDone: func(network, addr string, err error) {
 			if err != nil {
 				fmt.Println("ConnectDone ERR: ", err.Error())
@@ -106,18 +106,30 @@ func traceGetREST(fullURL string, client *http.Client, failureHandler func(error
 		GotConn: func(connInfo httptrace.GotConnInfo) {
 			fmt.Printf("Got Conn: %+v\n", connInfo)
 		},
+		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
+			fmt.Printf("DNS Info: %+v\n", dnsInfo)
+		},
+		// This is request header being written out
+		WroteHeaders: func() {
+			fmt.Println("Wrote Headers!!")
+		},
+		//  After  this  step; the endpoint  gets called; request body (any)
+		WroteRequest: func(wreqInfo httptrace.WroteRequestInfo) {
+			if wreqInfo.Err != nil {
+				fmt.Println("WroteRequest ERR: ", wreqInfo.Err.Error())
+			}
+			fmt.Println("Wrote Request!!")
+		},
 		// If get a  response back ..
 		GotFirstResponseByte: func() {
 			fmt.Println("First Byte!! >>")
 		},
-		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			fmt.Printf("DNS Info: %+v\n", dnsInfo)
-		},
-		WroteHeaders: func() {
-			fmt.Println("Wrote Headers!!")
-		},
-		WroteRequest: func(wreqInfo httptrace.WroteRequestInfo) {
-			//spew.Dump(wreqInfo.Err)
+		// connection  going  idle now ..
+		PutIdleConn: func(err error) {
+			if err != nil {
+				fmt.Println("PutIdleConn ERR: ", err.Error())
+			}
+			fmt.Println("Connection going idle ..")
 		},
 	}
 	// Attach context ..
