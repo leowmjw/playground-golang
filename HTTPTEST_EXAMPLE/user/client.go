@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"sync"
 	"time"
 )
@@ -89,6 +90,66 @@ func (usc UserServiceClient) SlowUserService() error {
 		return err
 	}
 	return doGetREST(fullURL, usc.httpClient, f)
+}
+
+func traceGetREST(fullURL string, client *http.Client, failureHandler func(error) error) error {
+	// Setup  the request
+	req, _ := http.NewRequest("GET", fullURL, nil)
+	trace := &httptrace.ClientTrace{
+		// First time httpClient being set up
+		ConnectDone: func(network, addr string, err error) {
+			if err != nil {
+				fmt.Println("ConnectDone ERR: ", err.Error())
+			}
+			fmt.Println("DONE: ", network, " ", addr)
+		},
+		GotConn: func(connInfo httptrace.GotConnInfo) {
+			fmt.Printf("Got Conn: %+v\n", connInfo)
+		},
+		// If get a  response back ..
+		GotFirstResponseByte: func() {
+			fmt.Println("First Byte!! >>")
+		},
+		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
+			fmt.Printf("DNS Info: %+v\n", dnsInfo)
+		},
+		WroteHeaders: func() {
+			fmt.Println("Wrote Headers!!")
+		},
+		WroteRequest: func(wreqInfo httptrace.WroteRequestInfo) {
+			//spew.Dump(wreqInfo.Err)
+		},
+	}
+	// Attach context ..
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+	//_, err := http.DefaultTransport.RoundTrip(req)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		// Use  failureHandler if available
+		if failureHandler != nil {
+			// If it fails; try the fallback connections to diagnose further
+			return failureHandler(err)
+		}
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		// Non-fatal error
+		return fmt.Errorf("Unexpected Response: %s", resp.Status)
+	}
+	mybody, rerr := ioutil.ReadAll(resp.Body)
+	if rerr != nil {
+		panic(rerr)
+	}
+	fmt.Println("============ OUTPUT ==============")
+	fmt.Println(string(mybody))
+	// Do something ...
+
+	return nil
 }
 
 func doGetREST(fullURL string, client *http.Client, failureHandler func(error) error) error {

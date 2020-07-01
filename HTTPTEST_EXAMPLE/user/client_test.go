@@ -126,3 +126,50 @@ func Test_doGetREST(t *testing.T) {
 		})
 	}
 }
+
+func Test_traceGetREST(t *testing.T) {
+	type args struct {
+		fullURL        string
+		client         *http.Client
+		failureHandler func(error) error
+	}
+
+	baseURL := "http://localhost:8080" // To put httptest?
+	usc := NewUserServiceClient(baseURL)
+	//  Setup Mocks
+	srv := startHTTPServer()
+	defer srv.Close()
+	fmt.Println("URL: " + srv.URL)
+	// FailureHandler
+	f := func(err error) error {
+		if isTimeoutError(err) {
+			fmt.Println("TIMEOUT!!!")
+		}
+		return err
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"happy #1", args{
+			//fullURL:        "https://google.com.sg",
+			fullURL:        srv.URL + "/query",
+			client:         usc.httpClient,
+			failureHandler: f,
+		}, false},
+		{"sad #1", args{
+			//fullURL:        "https://google.com.sg",
+			fullURL:        srv.URL + "/slow",
+			client:         usc.httpClient,
+			failureHandler: f,
+		}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := traceGetREST(tt.args.fullURL, tt.args.client, tt.args.failureHandler); (err != nil) != tt.wantErr {
+				t.Errorf("traceGetREST() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
