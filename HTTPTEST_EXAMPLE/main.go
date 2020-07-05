@@ -10,5 +10,6 @@ func main() {
 	fmt.Println("httptest Server ..")
 	// Start server
 	//user.StartUserService()
-	user.StartAuthService()
+	user.StartSimpleAuthService()
+	//user.StartAuthService()
 }
