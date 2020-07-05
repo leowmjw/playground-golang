@@ -9,5 +9,6 @@ import (
 func main() {
 	fmt.Println("httptest Server ..")
 	// Start server
-	user.StartUserService()
+	//user.StartUserService()
+	user.StartAuthService()
 }
