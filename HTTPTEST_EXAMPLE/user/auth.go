@@ -12,6 +12,11 @@ import (
 // UserAuth service
 
 // Server
+// Server using simple routing .. as oer Matt Ryer
+func StartSimpleAuthService() {
+
+}
+
 // User Service content served in front of a Proxy (like nginx)
 func StartAuthService() {
 	server := graceful.WithDefaults(&http.Server{
