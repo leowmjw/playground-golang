@@ -1,3 +1,5 @@
-run:
-	@go build  -o testuser .
+run: build
 	@./testuser
+
+build:
+	@go build  -o testuser .
